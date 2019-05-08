@@ -14,10 +14,11 @@
     </div>
     <div v-else class="graph">
       <ul>
-        <li v-for="vertex in graph.list">
-          {{ vertex.key }} -> {{ vertex.values }}
+        <li v-for="vertex in list">
+          {{ vertex.key }} -> {{ vertex.adjacent }}
         </li>
       </ul>
+      <button class="button" @click="alghoritm">Обработать алгоритмом</button>
     </div>
     <button @click="show = !show" class="button button_switcher">Показать\Спрятать граф</button>
   </div>
@@ -30,13 +31,13 @@
         show: false,
         firstVertex: '',
         secondVertex: '',
+        list: [{
+          key: '',
+          adjacent: []
+        }],
         graph: {
           edges: [],
-          verticies: [],
-          list: [{
-            key: '',
-            values: []
-          }]
+          verticies: []
         },
       }
     },
@@ -48,15 +49,15 @@
         this.graph.verticies.push(vertex);
       },
       addToList (firstVertex, secondVertex) {
-        let object = this.graph.list.find(element => {
+        let object = this.list.find(element => {
           return element.key === firstVertex || !element.key;
         });
         if (object) {
           object.key = firstVertex;
-          object.values.push(secondVertex);
+          object.adjacent.push(secondVertex);
           return;
         }
-        this.graph.list.push({ key: firstVertex, values: [...secondVertex] });
+        this.list.push({ key: firstVertex, adjacent: [...secondVertex] });
       },
       addEdge () {
         if (!this.hasVertex(this.firstVertex)) {
@@ -73,6 +74,9 @@
       renewVerticies () {
         this.firstVertex = '';
         this.secondVertex = '';
+      },
+      alghoritm () {
+
       }
     }
   }
