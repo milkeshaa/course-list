@@ -25,6 +25,8 @@
 </template>
 
 <script>
+  const SUBSET_OF_5 = 5;
+
   export default {
     data () {
       return {
@@ -75,8 +77,58 @@
         this.firstVertex = '';
         this.secondVertex = '';
       },
+      getVertexOfMaxDegree () {
+        let max = this.list[0].adjacent.length;
+        let index = 0;
+        for (let i = 0; i < this.list.length; i++) {
+          if (this.list[i].adjacent.length > max) {
+            max = this.list[i].adjacent.length;
+            index = i;
+          }
+        }
+        return this.list[index];
+      },
+      findTriangle (set) {
+        let flag = false;
+        let graphOnSet = {
+          edges: []
+        };
+        this.graph.edges.forEach(edge => {
+          let delimiterIndex = edge.indexOf("_");
+          let u = edge.substring(0, delimiterIndex);
+          let v = edge.substring(delimiterIndex + 1);
+          if (set.includes(u) && set.includes(v)) {
+            graphOnSet.edges.push(edge);
+          }
+        });
+        if (graphOnSet.edges.length < 3) {
+          return false;
+        }
+        graphOnSet.edges.forEach(edge => {
+          let delimiterIndex = edge.indexOf("_");
+          let u = edge.substring(0, delimiterIndex);
+          let v = edge.substring(delimiterIndex + 1);
+          set.forEach(vertex => {
+            if ((graphOnSet.edges.includes(v + "_" + vertex) && graphOnSet.edges.includes(vertex + "_" + u))
+                || (graphOnSet.edges.includes(vertex + "_" + v) && graphOnSet.edges.includes(u + "_" + vertex))) {
+              flag = true;
+            }
+          });
+        });
+        return flag;
+      },
+      workWithFive (vertex) {
+        let subset = [];
+        for (let i = 0; i < SUBSET_OF_5; i++) {
+          subset.push(vertex.adjacent[i]);
+        }
+        console.log(this.findTriangle(subset));
+      },
       alghoritm () {
-
+        let vertexOfMaxDegree = this.getVertexOfMaxDegree();
+        if (vertexOfMaxDegree.adjacent.length >= 5) {
+          this.workWithFive(vertexOfMaxDegree);
+        }
       }
     }
   }
