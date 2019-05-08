@@ -251,11 +251,15 @@
       },
       updateCover () {
         let verticies = this.graphCopy.verticies.filter(vertex => {
+          let counter = 0;
           for (let i = 0; i < this.cover.length; i++) {
             let fragment = this.cover[i];
-            if (!fragment.verticies.includes(vertex)) {
-              return true;
+            if (fragment.verticies.includes(vertex)) {
+              counter++;
             }
+          }
+          if (counter < 2) {
+            return true;
           }
         });
         verticies.forEach(vertex => {
@@ -371,6 +375,7 @@
     padding: 10px;
     font-size: 16px;
     border-radius: 10px;
+    cursor: pointer;
   }
   html, body {
     margin: 0;
