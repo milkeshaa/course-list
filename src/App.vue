@@ -192,7 +192,7 @@
         });
         if (vertexInGraphAndFragment) {
           this.findClique(vertexInGraphAndFragment);
-          this.cover.push(this.clique);
+          this.cover.push(this.clone(this.clique));
         }
       },
       findClique (vertex) {
@@ -219,6 +219,27 @@
         }
         this.clique.verticies.push(currentVertex.key);
       },
+      clone (object) {
+          let copy = {};
+
+          if (null === object || "object" != typeof object) return object;
+
+          if (object instanceof Array) {
+              copy = [];
+              for (let i = 0, len = object.length; i < len; i++) {
+                  copy[i] = this.clone(object[i]);
+              }
+              return copy;
+          }
+
+          if (object instanceof Object) {
+              copy = {};
+              for (var attr in object) {
+                  if (object.hasOwnProperty(attr)) copy[attr] = this.clone(object[attr]);
+              }
+              return copy;
+          }
+      },
       workWithFive (vertex) {
         let subset = [];
         for (let i = 0; i < SUBSET_OF_5; i++) {
@@ -232,7 +253,8 @@
         this.clique.verticies = this.triangle.verticies;
         this.expandClique(vertex.adjacent);
         this.clique.verticies.push(vertex.key);
-        this.cover.push(this.clique);
+        this.cover.push(this.clone(this.clique));
+        console.log(this.cover, this.clique, 'HERE');
         while (this.graph.verticies.length && this.graph.edges.length) {
           this.updateGraph();
           this.updateList();
