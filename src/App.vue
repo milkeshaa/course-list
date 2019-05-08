@@ -41,6 +41,11 @@
           edges: [],
           verticies: []
         },
+        triangle: null,
+        clique: {
+          verticies: []
+        },
+        cover: []
       }
     },
     methods: {
@@ -93,6 +98,9 @@
         let graphOnSet = {
           edges: []
         };
+        let triangle = {
+          verticies: []
+        }
         this.graph.edges.forEach(edge => {
           let delimiterIndex = edge.indexOf("_");
           let u = edge.substring(0, delimiterIndex);
@@ -111,18 +119,126 @@
           set.forEach(vertex => {
             if ((graphOnSet.edges.includes(v + "_" + vertex) && graphOnSet.edges.includes(vertex + "_" + u))
                 || (graphOnSet.edges.includes(vertex + "_" + v) && graphOnSet.edges.includes(u + "_" + vertex))) {
+              triangle.verticies = [u, v, vertex];
               flag = true;
             }
           });
         });
-        return flag;
+        return flag ? triangle : false;
+      },
+      expandClique (enviroment) {
+        if (!enviroment.length) {
+          return;
+        }
+        let counter = 0;
+        let leftVerticies = enviroment.filter(vertex => {
+          return !this.clique.verticies.includes(vertex);
+        });
+        leftVerticies.forEach(vertex => {
+          this.clique.verticies.forEach(cliqueVertex => {
+            if (this.graph.edges.includes(vertex + "_" + cliqueVertex)
+                    || this.graph.edges.includes(cliqueVertex + "_" + vertex)) {
+              counter++;
+            }
+          })
+          if (counter === this.clique.verticies.length) {
+            this.clique.verticies.push(vertex);
+            this.expandClique(leftVerticies);
+          }
+        });
+      },
+      updateGraph () {
+        this.graph.edges = this.graph.edges.filter(edge => {
+          let delimiterIndex = edge.indexOf("_");
+          let u = edge.substring(0, delimiterIndex);
+          let v = edge.substring(delimiterIndex + 1);
+          if (!(this.clique.verticies.includes(u) && this.clique.verticies.includes(v))) {
+            return true;
+          }
+        });
+        this.graph.verticies = this.graph.verticies.filter(vertex => {
+          for (let i = 0; i < this.graph.edges.length; i++) {
+            let edge = this.graph.edges[i];
+            let delimiterIndex = edge.indexOf("_");
+            let u = edge.substring(0, delimiterIndex);
+            let v = edge.substring(delimiterIndex + 1);
+            if (vertex === u || vertex === v) {
+              return true;
+            }
+          }
+        });
+      },
+      updateList () {
+        this.list = [{
+          key: '',
+          adjacent: []
+        }];
+        this.graph.edges.forEach(edge => {
+          let delimiterIndex = edge.indexOf("_");
+          let u = edge.substring(0, delimiterIndex);
+          let v = edge.substring(delimiterIndex + 1);
+          this.addToList(u, v);
+          this.addToList(v, u);
+        });
+      },
+      expandCover () {
+        let vertexInGraphAndFragment = this.graph.verticies.find(vertex => {
+          for (let i = 0; i < this.cover.length; i++) {
+            let fragment = this.cover[i];
+            if (fragment.verticies.includes(vertex)) {
+              return true;
+            }
+          }
+        });
+        if (vertexInGraphAndFragment) {
+          this.findClique(vertexInGraphAndFragment);
+          this.cover.push(this.clique);
+        }
+      },
+      findClique (vertex) {
+        let currentVertex = this.list.find(element => {
+          return element.key === vertex;
+        });
+        if (currentVertex.adjacent.length === 1) {
+          this.clique.verticies = currentVertex.adjacent;
+        } else if (currentVertex.adjacent.length === 2) {
+          if (this.graph.edges.includes((currentVertex.adjacent[0] + "_" + currentVertex.adjacent[1])
+                  || (currentVertex.adjacent[1] + "_" + currentVertex.adjacent[0]))) {
+            this.clique.verticies = currentVertex.adjacent;
+          } else {
+            alert("Граф не рёберный");
+            return false;
+          }
+        } else if (currentVertex.adjacent.length > 2) {
+          this.clique = this.findTriangle(currentVertex.adjacent);
+          if (!this.clique) {
+            alert("Граф не рёберный");
+            return false;
+          }
+          this.expandClique(currentVertex.adjacent);
+        }
+        this.clique.verticies.push(currentVertex.key);
       },
       workWithFive (vertex) {
         let subset = [];
         for (let i = 0; i < SUBSET_OF_5; i++) {
           subset.push(vertex.adjacent[i]);
         }
-        console.log(this.findTriangle(subset));
+        this.triangle = this.findTriangle(subset);
+        if (!this.triangle) {
+          alert("Граф не рёберный");
+          return false;
+        }
+        this.clique.verticies = this.triangle.verticies;
+        this.expandClique(vertex.adjacent);
+        this.clique.verticies.push(vertex.key);
+        this.cover.push(this.clique);
+        while (this.graph.verticies.length && this.graph.edges.length) {
+          this.updateGraph();
+          this.updateList();
+          this.expandCover();
+        }
+        console.log(this.cover);
       },
       workWithFour (vertex) {
         console.log(this.findTriangle(vertex.adjacent));
