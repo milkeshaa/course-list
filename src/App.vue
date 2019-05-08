@@ -124,10 +124,22 @@
         }
         console.log(this.findTriangle(subset));
       },
+      workWithFour (vertex) {
+        console.log(this.findTriangle(vertex.adjacent));
+      },
+      workWithThree (vertex) {
+        console.log(this.findTriangle(vertex.adjacent));
+      },
       alghoritm () {
         let vertexOfMaxDegree = this.getVertexOfMaxDegree();
         if (vertexOfMaxDegree.adjacent.length >= 5) {
           this.workWithFive(vertexOfMaxDegree);
+        }
+        if (vertexOfMaxDegree.adjacent.length === 4) {
+          this.workWithFour(vertexOfMaxDegree);
+        }
+        if (vertexOfMaxDegree.adjacent.length === 3) {
+          this.workWithThree(vertexOfMaxDegree);
         }
       }
     }
