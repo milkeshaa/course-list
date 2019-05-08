@@ -73,7 +73,7 @@
           object.adjacent.push(secondVertex);
           return;
         }
-        this.list.push({ key: firstVertex, adjacent: [...secondVertex] });
+        this.list.push({ key: firstVertex, adjacent: [secondVertex] });
       },
       addEdge () {
         if (!this.hasVertex(this.firstVertex)) {
@@ -211,8 +211,8 @@
         if (currentVertex.adjacent.length === 1) {
           this.clique.verticies = currentVertex.adjacent;
         } else if (currentVertex.adjacent.length === 2) {
-          if (this.graph.edges.includes((currentVertex.adjacent[0] + "_" + currentVertex.adjacent[1])
-                  || (currentVertex.adjacent[1] + "_" + currentVertex.adjacent[0]))) {
+          if (this.graph.edges.includes((currentVertex.adjacent[0] + "_" + currentVertex.adjacent[1]))
+                  || this.graph.edges.includes(currentVertex.adjacent[1] + "_" + currentVertex.adjacent[0])) {
             this.clique.verticies = currentVertex.adjacent;
           } else {
             alert("Граф не рёберный");
