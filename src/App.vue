@@ -2,10 +2,14 @@
   <div id="app" class="container">
     <div class="form" v-if="!show">
       <div class="edge">
-        Введите ребро, если же вершина одна, второе поле оставьте пустым.
-        <input placeholder="Введите вершину" v-model="firstVertex" type="text"/>
-        <input placeholder="Введите вершину" v-model="secondVertex" type="text"/>
-        <button @click="addEdge">Добавить ребро в граф</button>
+        <div class="text">
+          Введите ребро, если же вершина одна, второе поле оставьте пустым.
+        </div>
+        <div class="inputs-container">
+          <input class="input" placeholder="Введите вершину" v-model="firstVertex" type="text"/>
+          <input class="input" placeholder="Введите вершину" v-model="secondVertex" type="text"/>
+          <button class="button" @click="addEdge">Добавить ребро в граф</button>
+        </div>
       </div>
     </div>
     <div v-else class="graph">
@@ -84,16 +88,28 @@
     height: 100%;
     width: 100%;
   }
-  .game {
+  .inputs-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .edge {
     text-align: center;
-    font-size: 72px;
-    border: aqua 1px solid;
-    border-radius: 12px;
+    flex-direction: column;
+    font-size: 24px;
+  }
+  .input {
+    border-radius: 5px;
+    margin: 3px;
+    text-align: center;
+    width: 50%;
   }
   .button {
     margin: 5px;
     padding: 10px;
     font-size: 16px;
+    border-radius: 10px;
   }
   html, body {
     margin: 0;
