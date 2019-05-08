@@ -13,12 +13,15 @@
       </div>
     </div>
     <div v-else class="graph">
+      <div class="text" v-if="prototypeShow">
+        Прообраз заданного рёберного графа:
+      </div>
       <ul>
         <li v-for="vertex in list">
           {{ vertex.key }} -> {{ vertex.adjacent }}
         </li>
       </ul>
-      <button class="button" @click="alghoritm">Обработать алгоритмом</button>
+      <button class="button" @click="alghoritm" v-if="!prototypeShow">Обработать алгоритмом</button>
     </div>
     <button @click="show = !show" class="button button_switcher">Показать\Спрятать граф</button>
   </div>
@@ -31,6 +34,7 @@
     data () {
       return {
         show: false,
+        prototypeShow: false,
         firstVertex: '',
         secondVertex: '',
         list: [{
@@ -41,6 +45,11 @@
           edges: [],
           verticies: []
         },
+        prototype: {
+          edges: [],
+          verticies: []
+        },
+        graphCopy: null,
         triangle: null,
         clique: {
           verticies: []
@@ -240,6 +249,50 @@
               return copy;
           }
       },
+      updateCover () {
+        let verticies = this.graphCopy.verticies.filter(vertex => {
+          for (let i = 0; i < this.cover.length; i++) {
+            let fragment = this.cover[i];
+            if (!fragment.verticies.includes(vertex)) {
+              return true;
+            }
+          }
+        });
+        verticies.forEach(vertex => {
+          this.cover.push({ verticies: [vertex] });
+        });
+        this.createPrototype();
+      },
+      createPrototype () {
+        for (let i = 0; i < this.cover.length; i++) {
+          this.prototype.verticies.push(i + 1);
+        }
+        this.cover.forEach(fragment => {
+          let intersection = this.cover.filter(element => {
+            for (let i = 0; i < element.verticies.length; i++) {
+              if (JSON.stringify(fragment.verticies) !== JSON.stringify(element.verticies)) {
+                if (fragment.verticies.includes(element.verticies[i])) {
+                  return true;
+                }
+              }
+            }
+          });
+          if (intersection.length) {
+            intersection.forEach(element => {
+              if (!this.prototype.edges.includes((this.cover.indexOf(element) + 1) + "_" + (this.cover.indexOf(fragment) + 1))) {
+                this.prototype.edges.push((this.cover.indexOf(fragment) + 1) + "_" + (this.cover.indexOf(element) + 1));
+              }
+            });
+          }
+        });
+        this.prototype.edges.forEach(edge => {
+          let delimiterIndex = edge.indexOf("_");
+          let u = edge.substring(0, delimiterIndex);
+          let v = edge.substring(delimiterIndex + 1);
+          this.addToList(u, v);
+          this.addToList(v, u);
+        });
+      },
       workWithFive (vertex) {
         let subset = [];
         for (let i = 0; i < SUBSET_OF_5; i++) {
@@ -254,13 +307,13 @@
         this.expandClique(vertex.adjacent);
         this.clique.verticies.push(vertex.key);
         this.cover.push(this.clone(this.clique));
-        console.log(this.cover, this.clique, 'HERE');
         while (this.graph.verticies.length && this.graph.edges.length) {
           this.updateGraph();
           this.updateList();
           this.expandCover();
         }
         console.log(this.cover);
+        this.updateCover();
       },
       workWithFour (vertex) {
         console.log(this.findTriangle(vertex.adjacent));
@@ -269,6 +322,8 @@
         console.log(this.findTriangle(vertex.adjacent));
       },
       alghoritm () {
+        this.prototypeShow = true;
+        this.graphCopy = this.clone(this.graph);
         let vertexOfMaxDegree = this.getVertexOfMaxDegree();
         if (vertexOfMaxDegree.adjacent.length >= 5) {
           this.workWithFive(vertexOfMaxDegree);
