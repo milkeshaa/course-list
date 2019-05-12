@@ -600,7 +600,7 @@
 
 <style lang="scss">
   .container {
-    background-color: plum;
+    background-color: #2fb62f;
     display: flex;
     justify-content: center;
     align-items: center;
