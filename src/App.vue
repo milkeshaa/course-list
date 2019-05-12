@@ -382,6 +382,30 @@
         });
         return flag ? oddTriangle : false;
       },
+      isNotIsomorphicToCycle (set) {
+        let graphOnSet = {
+          edges: []
+        };
+        this.listOnSet = [{
+          key: '',
+          adjacent: []
+        }];
+        this.graph.edges.forEach(edge => {
+          let delimiterIndex = edge.indexOf("_");
+          let u = edge.substring(0, delimiterIndex);
+          let v = edge.substring(delimiterIndex + 1);
+          if (set.includes(u) && set.includes(v)) {
+            graphOnSet.edges.push(edge);
+            this.addToListOnSet(u, v);
+            this.addToListOnSet(v, u);
+          }
+        });
+        if (graphOnSet.edges.length !== 4) {
+          return false;
+        }
+        let flag = this.listOnSet.find(element => { element.adjacent.length !== 2 });
+        return flag;
+      },
       workWithFive (vertex) {
         let subset = [];
         for (let i = 0; i < SUBSET_OF_5; i++) {
@@ -390,7 +414,7 @@
         this.triangle = this.findTriangle(subset);
         if (!this.triangle) {
           alert("Граф не рёберный");
-          return false;
+          return;
         }
         this.workWithTriangle(vertex);
       },
@@ -402,9 +426,76 @@
             let set = this.clone(vertex.adjacent);
             set.push(vertex.key);
             this.oddTriangle = this.findOddTriangle(set);
-            console.log(this.oddTriangle);
-            this.clique = this.clone(this.oddTriangle);
-            return;
+            if (this.oddTriangle) {
+              console.log(this.oddTriangle, 'odd triangle');
+              this.clique = this.clone(this.oddTriangle);
+              return;
+            }
+            if (this.isNotIsomorphicToCycle(vertex.adjacent)) {
+              alert("Граф не рёберный");
+              return;
+            }
+            let supList = [];
+            this.list.forEach(element => {
+              if (vertex.adjacent.includes(element.key)) {
+                supList.push(element);
+              }
+            });
+            let Vertex = supList.find(element => element.adjacent.length > 3);
+            console.log(Vertex);
+            if (!Vertex) {
+              let takenVerticies = [];
+              for (let i = 0; i < vertex.adjacent.length - 1; i++) {
+                if (this.graph.edges.includes((vertex.adjacent[i] + "_" + vertex.adjacent[i + 1])
+                        || (vertex.adjacent[i + 1] + "_" + vertex.adjacent[i]))) {
+                  takenVerticies.push(vertex.adjacent[i + 1]);
+                  takenVerticies.push(vertex.adjacent[i]);
+                  break;
+                }
+              }
+              this.clique.verticies = takenVerticies;
+              this.clique.verticies.push(vertex.key);
+              this.cover.push(this.clone(this.clique));
+              this.updateGraph();
+              this.updateList();
+              this.clique.verticies = [];
+              let lastVerticies = vertex.adjacent.filter(v => !takenVerticies.includes(v));
+              this.clique.verticies = lastVerticies;
+              this.clique.verticies.push(vertex.key);
+              return;
+            }
+            let aVertex = this.list.find(element => {
+              return Vertex.adjacent.includes(element.key) && !vertex.adjacent.includes(element.key) && element.key !== vertex.key;
+            });
+            let aVertexAdjacnet = [];
+            vertex.adjacent.forEach(v => {
+              if (aVertex.adjacent.includes(v)) {
+                aVertexAdjacnet.push(v);
+              }
+            });
+            if (aVertexAdjacnet.length === 1 || aVertexAdjacnet.length === 3) {
+              alert("Граф не рёберный");
+              return;
+            } else if (aVertexAdjacnet.length === 2) {
+              if (this.graph.edges.includes(aVertexAdjacnet[0] + "_" + aVertexAdjacnet[1])
+                      || this.graph.edges.includes(aVertexAdjacnet[1] + "_" + aVertexAdjacnet[0])) {
+                this.clique.verticies.push(aVertexAdjacnet[1], aVertexAdjacnet[0], aVertex.key);
+                return;
+              }
+              this.triangle = this.findTriangle(set);
+              if (!this.triangle) {
+                alert("Граф не рёберный");
+                return;
+              }
+              this.clique = this.clone(this.triangle);
+            } else if (aVertexAdjacnet.length === 4) {
+              this.triangle = this.findTriangle(set);
+              if (!this.triangle) {
+                alert("Граф не рёберный");
+                return;
+              }
+              this.clique = this.clone(this.triangle);
+            }
           }
           this.workWithTriangle(vertex);
         } else {
