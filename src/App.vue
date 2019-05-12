@@ -13,17 +13,52 @@
       </div>
     </div>
     <div v-else class="graph">
-      <div class="text" v-if="prototypeShow">
-        Прообраз заданного рёберного графа:
+      <div class="block">
+        <div class="text" v-if="prototypeShow">
+          Прообраз:
+        </div>
+        <ul>
+          <li v-for="vertex in list">
+            {{ vertex.key }} -> {{ vertex.adjacent }}
+          </li>
+        </ul>
       </div>
-      <ul>
-        <li v-for="vertex in list">
-          {{ vertex.key }} -> {{ vertex.adjacent }}
-        </li>
-      </ul>
-      <button class="button" @click="alghoritm" v-if="!prototypeShow">Обработать алгоритмом</button>
+      <div class="block" v-if="prototypeShow">
+        <div class="text">
+          Граф:
+        </div>
+        <ul>
+          <li v-for="edge in graphCopy.edges">
+            {{ edge }}
+          </li>
+        </ul>
+      </div>
     </div>
-    <button @click="show = !show" class="button button_switcher">Показать\Спрятать граф</button>
+    <div class="cycles" v-if="cycleShow && show">
+      <div class="block">
+        <div class="text">
+          Эйлеров цикл прообраза:
+        </div>
+        <ul>
+          <li v-for="vertex in eulerCycle">
+            {{ vertex.key }}
+          </li>
+        </ul>
+      </div>
+      <div class="block">
+        <div class="text">
+          Гамильтонов цикл графа:
+        </div>
+        <ul>
+          <li v-for="vertex in gamiltonCycle">
+            {{ vertex }}
+          </li>
+        </ul>
+      </div>
+    </div>
+    <button class="button" @click="alghoritm" v-if="!prototypeShow && show">Обработать алгоритмом</button>
+    <button v-if="prototypeShow && show" @click="eulerAlghoritm" class="button button_switcher">Найти эйлеров цикл</button>
+    <button @click="handleShow" class="button button_switcher">Показать\Спрятать граф</button>
   </div>
 </template>
 
@@ -35,6 +70,7 @@
       return {
         show: false,
         prototypeShow: false,
+        cycleShow: false,
         firstVertex: '',
         secondVertex: '',
         list: [{
@@ -59,7 +95,10 @@
         clique: {
           verticies: []
         },
-        cover: []
+        cover: [],
+        stack: [],
+        eulerCycle: [],
+        gamiltonCycle: []
       }
     },
     methods: {
@@ -546,6 +585,12 @@
                 localClique.push(a.key);
                 this.clique.verticies = localClique;
                 return;
+              } else if (count > 1) {
+                let set = vertex.adjacent;
+                set.push(vertex.key);
+                this.triangle = this.findTriangle(set);
+                this.clique = this.clone(this.triangle);
+                return;
               }
             } else {
               let set = vertex.adjacent;
@@ -565,7 +610,6 @@
       },
       alghoritm () {
         this.prototypeShow = true;
-        this.graphCopy = this.clone(this.graph);
         let vertexOfMaxDegree = this.getVertexOfMaxDegree();
         if (vertexOfMaxDegree.adjacent.length >= 5) {
           this.workWithFive(vertexOfMaxDegree);
@@ -593,6 +637,67 @@
         }
         console.log(this.cover);
         this.updateCover();
+      },
+      eulerAlghoritm () {
+        this.cycleShow = true;
+        this.checkForEulerPath() && this.findEulerPath();
+        this.eulerCycle.length && this.createGamiltonCycle();
+      },
+      createGamiltonCycle () {
+        let a = null;
+        for (let i = 0; i < this.eulerCycle.length - 1; i++) {
+          a = this.cover[+this.eulerCycle[i].key - 1].verticies.find(vertex => {
+            return this.cover[+this.eulerCycle[i + 1].key - 1].verticies.includes(vertex);
+          });
+          this.gamiltonCycle.push(a);
+        }
+        a = this.cover[+this.eulerCycle[this.eulerCycle.length - 1].key - 1].verticies.find(vertex => {
+          return this.cover[+this.eulerCycle[0].key - 1].verticies.includes(vertex);
+        });
+        this.gamiltonCycle.push(a);
+        console.log(this.gamiltonCycle);
+      },
+      checkForEulerPath () {
+        let countOddVerticies = 0;
+        this.list.forEach(element => {
+          (element.adjacent.length % 2) && countOddVerticies++;
+        });
+        if (countOddVerticies >= 2) {
+          alert("Граф не является эйлеровым");
+          return false;
+        }
+        return true;
+      },
+      findEulerPath () {
+        let v = this.list[0];
+        this.list.forEach(element => {
+          if (element.adjacent.length % 2) {
+            v = element;
+          }
+        });
+        this.stack.push(v);
+        while (this.stack.length) {
+          let w = this.stack[this.stack.length - 1];
+          for (let i = 0; i < this.list.length; i++) {
+            if (this.prototype.edges.includes(w.key + "_" + this.list[i].key)
+                    || this.prototype.edges.includes(this.list[i].key + "_" + w.key)) {
+              this.stack.push(this.list[i]);
+              this.prototype.edges.includes(w.key + "_" + this.list[i].key) && this.prototype.edges.splice(this.prototype.edges.indexOf(w.key + "_" + this.list[i].key), 1);
+              this.prototype.edges.includes(this.list[i].key + "_" + w.key) && this.prototype.edges.splice(this.prototype.edges.indexOf(this.list[i].key + "_" + w.key), 1);
+              break;
+            }
+          }
+          if (w.key === this.stack[this.stack.length - 1].key) {
+            this.stack.pop();
+            this.eulerCycle.push(w);
+          }
+        }
+      },
+      handleShow () {
+        this.graphCopy = this.clone(this.graph);
+        this.$nextTick(() => {
+          this.show = !this.show;
+        });
       }
     }
   }
@@ -607,6 +712,13 @@
     flex-direction: column;
     height: 100%;
     width: 100%;
+  }
+  .block {
+    padding: 0 10px 0 10px;
+  }
+  .graph, .cycles {
+    display: flex;
+    justify-content: space-between;
   }
   .inputs-container {
     display: flex;
