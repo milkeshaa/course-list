@@ -41,6 +41,10 @@
           key: '',
           adjacent: []
         }],
+        listOnSet: [{
+          key: '',
+          adjacent: []
+        }],
         graph: {
           edges: [],
           verticies: []
@@ -51,6 +55,7 @@
         },
         graphCopy: null,
         triangle: null,
+        oddTriangle: null,
         clique: {
           verticies: []
         },
@@ -74,6 +79,17 @@
           return;
         }
         this.list.push({ key: firstVertex, adjacent: [secondVertex] });
+      },
+      addToListOnSet (firstVertex, secondVertex) {
+        let object = this.listOnSet.find(element => {
+          return element.key === firstVertex || !element.key;
+        });
+        if (object) {
+          object.key = firstVertex;
+          object.adjacent.push(secondVertex);
+          return;
+        }
+        this.listOnSet.push({ key: firstVertex, adjacent: [secondVertex] });
       },
       addEdge () {
         if (!this.hasVertex(this.firstVertex)) {
@@ -297,6 +313,75 @@
           this.addToList(v, u);
         });
       },
+      findIsolatedVertex (set) {
+        let isolatedVertex = this.list.find(element => {
+          for (let i = 0; i < set.length; i++) {
+            if (element.adjacent.length === 1 && set[i] === element.key) {
+              return true;
+            }
+          }
+        });
+        return isolatedVertex;
+      },
+      workWithTriangle (vertex) {
+        this.clique.verticies = this.triangle.verticies;
+        this.expandClique(vertex.adjacent);
+        this.clique.verticies.push(vertex.key);
+      },
+      findOddTriangle (set) {
+        let flag = false;
+        let graphOnSet = {
+          edges: []
+        };
+        let oddTriangle = null;
+        this.graph.edges.forEach(edge => {
+          let delimiterIndex = edge.indexOf("_");
+          let u = edge.substring(0, delimiterIndex);
+          let v = edge.substring(delimiterIndex + 1);
+          if (set.includes(u) && set.includes(v)) {
+            graphOnSet.edges.push(edge);
+            this.addToListOnSet(u, v);
+            this.addToListOnSet(v, u);
+          }
+        });
+        if (graphOnSet.edges.length < 3) {
+          return false;
+        }
+        graphOnSet.edges.forEach(edge => {
+          let delimiterIndex = edge.indexOf("_");
+          let u = edge.substring(0, delimiterIndex);
+          let v = edge.substring(delimiterIndex + 1);
+          set.forEach(vertex => {
+            if ((graphOnSet.edges.includes(v + "_" + vertex) && graphOnSet.edges.includes(vertex + "_" + u))
+                    || (graphOnSet.edges.includes(vertex + "_" + v) && graphOnSet.edges.includes(u + "_" + vertex))) {
+              let triangle = {
+                verticies: [u, v, vertex]
+              };
+              let theRestOfSet = set.filter(Vertex => !triangle.verticies.includes(Vertex));
+              let oddVertex = this.listOnSet.find(element => {
+                for (let i = 0; i < theRestOfSet.length; i++) {
+                  if (element.key === theRestOfSet[i]) {
+                    if (element.adjacent.includes(u, v, vertex)) {
+                      return true;
+                    }
+                    if ((element.adjacent.includes(u) && !element.adjacent.includes(v) && !element.adjacent.includes(vertex))
+                            || (element.adjacent.includes(vertex) && !element.adjacent.includes(v) && !element.adjacent.includes(u))
+                            || (element.adjacent.includes(v) && !element.adjacent.includes(u) && !element.adjacent.includes(vertex))) {
+                      return true;
+                    }
+                  }
+                }
+              });
+              if (oddVertex) {
+                oddTriangle = triangle;
+                flag = true;
+                return;
+              }
+            }
+          });
+        });
+        return flag ? oddTriangle : false;
+      },
       workWithFive (vertex) {
         let subset = [];
         for (let i = 0; i < SUBSET_OF_5; i++) {
@@ -307,20 +392,25 @@
           alert("Граф не рёберный");
           return false;
         }
-        this.clique.verticies = this.triangle.verticies;
-        this.expandClique(vertex.adjacent);
-        this.clique.verticies.push(vertex.key);
-        this.cover.push(this.clone(this.clique));
-        while (this.graph.verticies.length && this.graph.edges.length) {
-          this.updateGraph();
-          this.updateList();
-          this.expandCover();
-        }
-        console.log(this.cover);
-        this.updateCover();
+        this.workWithTriangle(vertex);
       },
       workWithFour (vertex) {
-        console.log(this.findTriangle(vertex.adjacent));
+        let isolatedVertex = this.findIsolatedVertex(vertex.adjacent);
+        if (!isolatedVertex) {
+          this.triangle = this.findTriangle(vertex.adjacent);
+          if (!this.triangle) {
+            let set = this.clone(vertex.adjacent);
+            set.push(vertex.key);
+            this.oddTriangle = this.findOddTriangle(set);
+            console.log(this.oddTriangle);
+            this.clique = this.clone(this.oddTriangle);
+            return;
+          }
+          this.workWithTriangle(vertex);
+        } else {
+          this.clique.verticies.push(vertex.key);
+          this.clique.verticies.push(isolatedVertex.key);
+        }
       },
       workWithThree (vertex) {
         console.log(this.findTriangle(vertex.adjacent));
@@ -338,6 +428,14 @@
         if (vertexOfMaxDegree.adjacent.length === 3) {
           this.workWithThree(vertexOfMaxDegree);
         }
+        this.cover.push(this.clone(this.clique));
+        while (this.graph.verticies.length && this.graph.edges.length) {
+          this.updateGraph();
+          this.updateList();
+          this.expandCover();
+        }
+        console.log(this.cover);
+        this.updateCover();
       }
     }
   }
