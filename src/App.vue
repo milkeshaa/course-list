@@ -504,7 +504,51 @@
         }
       },
       workWithThree (vertex) {
-        console.log(this.findTriangle(vertex.adjacent));
+        let isolatedVertex = this.findIsolatedVertex(vertex.adjacent);
+        if (!isolatedVertex) {
+          this.triangle = this.findTriangle(vertex.adjacent);
+          if (!this.triangle) {
+            let w = this.list.find(element => {
+              return element.key !== vertex.key && !vertex.adjacent.includes(element.key) && !!element.adjacent.find(v => {
+                return vertex.adjacent.includes(v);
+              });
+            });
+            if (w) {
+              let count = 0;
+              let aVertex;
+              w.adjacent.forEach(v => {
+                if (vertex.adjacent.includes(v)) {
+                  count++;
+                  aVertex = v;
+                }
+              });
+              if (count === 1) {
+                let a = this.list.find(element => {
+                  return element.key === aVertex;
+                });
+                let localClique = [];
+                a.adjacent.forEach(v => {
+                  v !== w.key && localClique.push(v);
+                });
+                localClique.push(a.key);
+                this.clique.verticies = localClique;
+                return;
+              }
+            } else {
+              let set = vertex.adjacent;
+              set.push(vertex.key);
+              this.triangle = this.findTriangle(set);
+              this.clique = this.clone(this.triangle);
+              return;
+            }
+          } else {
+            this.clique = this.clone(this.triangle);
+            this.clique.verticies.push(vertex.key);
+          }
+        } else {
+          this.clique.verticies.push(vertex.key);
+          this.clique.verticies.push(isolatedVertex.key);
+        }
       },
       alghoritm () {
         this.prototypeShow = true;
