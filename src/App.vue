@@ -92,15 +92,28 @@
         this.listOnSet.push({ key: firstVertex, adjacent: [secondVertex] });
       },
       addEdge () {
-        if (!this.hasVertex(this.firstVertex)) {
+        if (!this.hasVertex(this.firstVertex) && this.firstVertex) {
           this.addVertex(this.firstVertex);
         }
-        if (!this.hasVertex(this.secondVertex)) {
+        if (!this.hasVertex(this.secondVertex) && this.secondVertex) {
           this.addVertex(this.secondVertex);
         }
-        this.addToList(this.firstVertex, this.secondVertex);
-        this.addToList(this.secondVertex, this.firstVertex);
-        this.graph.edges.push(this.firstVertex + "_" + this.secondVertex);
+        if (this.firstVertex && this.secondVertex) {
+          this.addToList(this.firstVertex, this.secondVertex);
+          this.addToList(this.secondVertex, this.firstVertex);
+          this.graph.edges.push(this.firstVertex + "_" + this.secondVertex);
+        } else {
+          this.show = !this.show;
+          this.prototypeShow = true;
+          this.prototype.verticies.push(1, 2);
+          this.prototype.edges.push("1_2");
+          this.list = [{
+            key: '',
+            adjacent: []
+          }];
+          this.addToList(1, 2);
+          this.addToList(2, 1);
+        }
         this.renewVerticies();
       },
       renewVerticies () {
@@ -556,12 +569,21 @@
         let vertexOfMaxDegree = this.getVertexOfMaxDegree();
         if (vertexOfMaxDegree.adjacent.length >= 5) {
           this.workWithFive(vertexOfMaxDegree);
-        }
-        if (vertexOfMaxDegree.adjacent.length === 4) {
+        } else if (vertexOfMaxDegree.adjacent.length === 4) {
           this.workWithFour(vertexOfMaxDegree);
-        }
-        if (vertexOfMaxDegree.adjacent.length === 3) {
+        } else if (vertexOfMaxDegree.adjacent.length === 3) {
           this.workWithThree(vertexOfMaxDegree);
+        } else if (vertexOfMaxDegree.adjacent.length === 2) {
+          if (this.graph.edges.includes(vertexOfMaxDegree.adjacent[0] + "_" + vertexOfMaxDegree.adjacent[1])
+                  || this.graph.edges.includes(vertexOfMaxDegree.adjacent[1] + "_" + vertexOfMaxDegree.adjacent[0])) {
+            this.clique.verticies.push(vertexOfMaxDegree.adjacent[0], vertexOfMaxDegree.adjacent[1], vertexOfMaxDegree.key);
+          } else {
+            this.clique.verticies.push(vertexOfMaxDegree.adjacent[0], vertexOfMaxDegree.key);
+          }
+        } else if (vertexOfMaxDegree.adjacent.length === 1) {
+          if (vertexOfMaxDegree.adjacent[0] || vertexOfMaxDegree.adjacent[0] === 0) {
+            this.clique.verticies.push(vertexOfMaxDegree.adjacent[0], vertexOfMaxDegree.key);
+          }
         }
         this.cover.push(this.clone(this.clique));
         while (this.graph.verticies.length && this.graph.edges.length) {
