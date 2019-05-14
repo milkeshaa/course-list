@@ -267,6 +267,14 @@
             }
           }
         });
+        let counter = 0;
+        let flag = this.cover.forEach(fragment => {
+           fragment.verticies.find(vertex => vertex === vertexInGraphAndFragment) && counter++;
+        });
+        if (counter >= 2) {
+            alert("Граф не рёберный");
+            return;
+        }
         if (vertexInGraphAndFragment) {
           this.findClique(vertexInGraphAndFragment);
           this.cover.push(this.clone(this.clique));
