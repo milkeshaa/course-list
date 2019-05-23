@@ -671,7 +671,7 @@
           (element.adjacent.length % 2) && countOddVerticies++;
         });
         if (countOddVerticies >= 2) {
-          alert("Граф не является эйлеровым");
+          alert("Граф не является рёберным графом эйлерова графа");
           return false;
         }
         return true;
